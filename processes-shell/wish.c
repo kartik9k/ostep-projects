@@ -129,6 +129,65 @@ int main(int argc, char** argv)
                 
             }
 
+            /* Execute cd in on parent branch */
+            else if (0 == strcmp(curr_cmd, "cd"))
+            {
+                if (NULL != cmd_for_child)
+                {
+                #if defined(DEBUG)
+                    printf ("Command is cd, printing args : %s\n", cmd_for_child);
+                #endif
+                    /* Parsing args and adding to Path */
+                    char *arg = strsep(&cmd_for_child, " ");
+                    int itr = 0;
+
+                    char *to_path;
+
+                    while (NULL != arg)
+                    {
+                        to_path = arg;
+                        arg = strsep(&cmd_for_child, " ");
+                        itr += 1;
+                    }
+
+                    if (1 == itr)
+                    {
+                    #if defined (DEBUG)
+                        printf ("Changing dir to : %s\n", to_path);
+                    #endif
+                        int ret_chdir = chdir((const char *)to_path);
+                        if (0 == ret_chdir)
+                        {
+                        #if defined (DEBUG)
+                            char cur_dir[1000];
+                            getcwd(cur_dir, 1000);
+                            printf ("Changed to dir : %s\n", cur_dir);
+                        #endif
+                        }
+
+                        /* Error handling here */
+                        else
+                        {
+
+                        }
+                        
+                    }
+
+                    /* Error handling here */
+                    else
+                    {
+                        
+                    }
+                    
+                }
+
+                else
+                {
+                    
+                }
+                
+            }
+
             /* Else fork and exec */
             else
             {
