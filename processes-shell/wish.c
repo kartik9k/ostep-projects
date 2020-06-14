@@ -28,7 +28,7 @@ int main(int argc, char** argv)
   		getline(&input_line, &bufsize, stdin);
 
   		char *temp = input_line;
-  		while (*input_line != '\n')
+  		while ('\n' != *(input_line))
   			input_line += 1;
 
   		*input_line = '\0';
@@ -36,17 +36,17 @@ int main(int argc, char** argv)
 
 		
         /* Tokenize user input -- check if there are multiple cmds */
-        char *cmds = strtok(input_line, "&");
+        char *cmds = strsep(&input_line, "&");
    		int i = 0;
         int parallel_cmds = 0;
         char *cmds_to_exec[100];
-	    while (cmds != NULL){
+	    while (NULL != cmds){
             if (' ' == *((char *)cmds))
             {
                 cmds += 1;
             }
 	        cmds_to_exec[i] = cmds;
-	        cmds = strtok(NULL, "&");
+	        cmds = strsep(&input_line, "&");
 	        i += 1;
 	    }
 	    cmds_to_exec[i] = NULL;
@@ -65,28 +65,61 @@ int main(int argc, char** argv)
     #endif
 
         i = 0;
+
+        /* Store list of proc_ids */
         pid_t cmds_proc_id[100];
         while (i <= parallel_cmds)
         {
-            pid_t proc_id = fork();
-            
-            /* Child branch -- exec cmd[i] here */
-            if (0 == proc_id)
+            char *cmd_for_child = (char *)malloc(sizeof(cmds_to_exec[i]));
+            strcpy (cmd_for_child, cmds_to_exec[i]);
+
+        #if defined (DEBUG)
+            printf ("Running command %d: %s\n", i, cmd_for_child);
+        #endif
+
+            /* Seperate commands and arguments */
+            char *curr_cmd = strsep(&cmd_for_child, " ");
+            if (NULL != curr_cmd)
+            {
+                /* Cmd name - curr_cmd */
+                printf ("Current cmd name : %s\n", curr_cmd);
+                if (NULL != cmd_for_child)
+                {
+                    /* Cmd args - cmd_for_child */
+                    printf ("Current args : %s\n", cmd_for_child);
+                }
+            }
+
+            /* Execute path cmd on parent branch */
+            if (0 == strcmp(curr_cmd, "path"))
             {
 
             }
 
+            /* Else fork and exec */
             else
             {
-                /* Fork failed -- return from here */
-                if (-1 == proc_id)
+                pid_t proc_id = fork();
+
+                /* Child branch -- exec cmd[i] here */
+                if (0 == proc_id)
                 {
-
+                    return 0;
                 }
-                cmds_proc_id[i] = proc_id;
-                /* Do nothing */
-            }
 
+                /* Parent branch */
+                else
+                {
+                    /* Fork failed -- return from here */
+                    if (-1 == proc_id)
+                    {
+                        return 0;
+                    }
+                    cmds_proc_id[i] = proc_id;
+                    /* Do nothing */
+                }
+            }
+            i += 1;
         }
 
         /* Wait for PIDs to finish */
