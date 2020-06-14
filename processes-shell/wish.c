@@ -40,7 +40,8 @@ int main(int argc, char** argv)
    		int i = 0;
         int parallel_cmds = 0;
         char *cmds_to_exec[100];
-	    while (NULL != cmds){
+	    while (NULL != cmds)
+        {
             if (' ' == *((char *)cmds))
             {
                 cmds += 1;
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
 
             /* Seperate commands and arguments */
             char *curr_cmd = strsep(&cmd_for_child, " ");
+        #if defined (DEBUG)
             if (NULL != curr_cmd)
             {
                 /* Cmd name - curr_cmd */
@@ -89,11 +91,42 @@ int main(int argc, char** argv)
                     printf ("Current args : %s\n", cmd_for_child);
                 }
             }
-
+        #endif
             /* Execute path cmd on parent branch */
             if (0 == strcmp(curr_cmd, "path"))
             {
+                if (NULL != cmd_for_child)
+                {
+                #if defined(DEBUG)
+                    printf ("Command is path, printing args : %s\n", cmd_for_child);
+                #endif
+                    /* Parsing args and adding to Path */
+                    char *arg = strsep(&cmd_for_child, " ");
+                    int itr = 0;
+                    while (NULL != arg)
+                    {
+                        path[itr] = arg;
+                        arg = strsep(&cmd_for_child, " ");
+                        itr += 1;
+                    }
+                    path[itr] = NULL;
 
+                    itr = 0;
+                #if defined (DEBUG)
+                    while (NULL != path[itr])
+                    {
+                        printf ("path[%d] = %s\n", itr, path[itr]);
+                        itr += 1;
+                    }
+                #endif
+                }
+
+                /* Error handling here */
+                else
+                {
+                    
+                }
+                
             }
 
             /* Else fork and exec */
