@@ -18,6 +18,7 @@ int main(int argc, char** argv)
     char **path[1000];
     path[0] = (char *)malloc(sizeof("/bin/"));
     strcpy(path[0], "/bin/");
+    path[1] = NULL;
 
     while (true == loop_inf)
     {
@@ -68,7 +69,7 @@ int main(int argc, char** argv)
         i = 0;
 
         /* Store list of proc_ids */
-        pid_t cmds_proc_id[100];
+        int cmds_proc_id[100];
         while (i <= parallel_cmds)
         {
             char *cmd_for_child = (char *)malloc(sizeof(cmds_to_exec[i]));
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
                 
             }
 
-            /* Execute cd in on parent branch */
+            /* Execute cd on parent branch */
             else if (0 == strcmp(curr_cmd, "cd"))
             {
                 if (NULL != cmd_for_child)
@@ -188,14 +189,44 @@ int main(int argc, char** argv)
                 
             }
 
+            /* Execute exit on Parent branch */
+            else if (0 == strcmp(curr_cmd, "exit"))
+            {
+                /* Wait for pids to complete */
+
+                /* Call exit func */
+            }
+
             /* Else fork and exec */
             else
             {
-                pid_t proc_id = fork();
+                int proc_id = fork();
 
                 /* Child branch -- exec cmd[i] here */
                 if (0 == proc_id)
                 {
+                    int itr = 0;
+                    while (NULL != path[itr])
+                    {
+                        char *path_to_exec = malloc(sizeof(path[itr]) + sizeof(curr_cmd));
+                        strcat(path_to_exec, path[itr]);
+                        strcat(path_to_exec, curr_cmd);
+
+                        if (0 == access(path_to_exec, X_OK))
+                        {
+                        #if defined (DEBUG)
+                            printf ("Cmd : %s found in %s\n", curr_cmd, path_to_exec);
+                        #endif
+                            execv(path_to_exec, &cmds_to_exec[i]);
+                        }
+
+                        itr += 1;
+
+                        free((void *)path_to_exec);
+                    }
+                #if defined (DEBUG)
+                    printf ("Returning\n");
+                #endif
                     return 0;
                 }
 
@@ -205,8 +236,11 @@ int main(int argc, char** argv)
                     /* Fork failed -- return from here */
                     if (-1 == proc_id)
                     {
+                        printf ("Fork failed\n");
                         return 0;
                     }
+
+                    printf ("In parent call\n");
                     cmds_proc_id[i] = proc_id;
                     /* Do nothing */
                 }
