@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 
-#define DEBUG
+// #define DEBUG
 
 int main(int argc, char** argv)
 {
@@ -206,6 +206,7 @@ int main(int argc, char** argv)
                 if (0 == proc_id)
                 {
                     int itr = 0;
+                    int imp_to_ret = 1;
                     while (NULL != path[itr])
                     {
                         char *path_to_exec = malloc(sizeof(path[itr]) + sizeof(curr_cmd));
@@ -214,16 +215,23 @@ int main(int argc, char** argv)
 
                         if (0 == access(path_to_exec, X_OK))
                         {
+                            imp_to_ret = 0;
                         #if defined (DEBUG)
                             printf ("Cmd : %s found in %s\n", curr_cmd, path_to_exec);
                         #endif
-                            execv(path_to_exec, &cmds_to_exec[i]);
+                            imp_to_ret = execv(path_to_exec, &cmds_to_exec[i]);
                         }
 
                         itr += 1;
 
                         free((void *)path_to_exec);
                     }
+
+                    if ((-1 == imp_to_ret) || (1 == imp_to_ret))
+                    {
+                        /* Error handling here */
+                    }
+
                 #if defined (DEBUG)
                     printf ("Returning\n");
                 #endif
@@ -236,11 +244,15 @@ int main(int argc, char** argv)
                     /* Fork failed -- return from here */
                     if (-1 == proc_id)
                     {
+                        /* Error handling here */
+                    #if defined (DEBUG)
                         printf ("Fork failed\n");
+                    #endif
                         return 0;
                     }
-
+                #if defined (DEBUG)
                     printf ("In parent call\n");
+                #endif
                     cmds_proc_id[i] = proc_id;
                     /* Do nothing */
                 }
@@ -249,5 +261,12 @@ int main(int argc, char** argv)
         }
 
         /* Wait for PIDs to finish */
+        i = 0;
+        while (i <= parallel_cmds)
+        {
+            int status;
+            waitpid(cmds_proc_id[i], &status, 0);
+            i += 1;
+        }
     }
 }
